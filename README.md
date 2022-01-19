@@ -7,4 +7,4 @@ sim_average_RW2lr_fixed: for a given combination of parameter values, produce av
 
 gen_: a series of functions able to produce struct variable containing a task design, with contingencies specified in input, and trial-wise outcomes generated randomly with each implementation.
 
-PL_simulations: for code simulating tasks with only one outcome type
+PL_simulations: for code simulating tasks with only one outcome type.
