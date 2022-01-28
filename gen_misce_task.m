@@ -47,14 +47,6 @@ xt = xt';%should be a column vector
 
 %% output 
 task = struct('p',p,'outcome',outcome,'nt',nt,'xt',xt);
-%% visualise
-figure;
-plot(xt,p,'b-');
-hold on
-plot(xt, outcome(:,1),'*')
-hold off
-legend('p(good outcome|choose opt 1)','outcome')
-xlabel('trials')
-ylabel('probability')
+
 
 end
