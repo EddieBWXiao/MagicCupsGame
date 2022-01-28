@@ -45,7 +45,7 @@ xt = task.xt;%for plotting
     alpha = params(1);
     beta = params(2);
     params = struct('alpha',alpha,'beta',beta);
-    model_title = sprintf('alpha = %.3f ,beta = %.1f',alpha, beta);
+    model_title = sprintf('alpha = %.3f, beta = %.1f',alpha, beta);
     
     %% loop through trials
     for t=1:nt
@@ -97,7 +97,7 @@ score(opt2_ind) = outcomes(opt2_ind,2);%chose opt 2, won in opt 2
 
 %note whether participants chose option 1 or not
 chose1 = double(opt1_ind);
-chose1(~opt1_ind) = NaN;
+chose1(~opt1_ind) = 0;%set those to zero
 
 
 feedback.outcomes = outcomes;%stores all feedback received (should be identical to mytask)
@@ -122,12 +122,13 @@ simu = struct('params',params,'v',v,'pchoice',pchoice,'choices',choice,'chose1',
 refc = 1;%use option 1 to plot
 
 if graph
-    close all
+    %close all
     % visualise task structure
+    figure;
     subplot(2,2,1)
-    plot(xt,p_out);
+    plot(xt,p_out,'g-');
     hold on
-    plot(xt,outcomes(:,refc),'gx');
+    plot(xt,outcomes(:,refc),'rx');
     hold off
     legend('p(outcome|choose opt 1)','outcome')
     xlabel('trial number')
@@ -135,10 +136,10 @@ if graph
     title('Visualisation of task structure')
 
     subplot(2,2,2)
-    plot(xt,p_out,'b-');
+    plot(xt,p_out,'g-');
     hold on
-    plot(xt, pchoice(:,refc),'-','LineWidth',3);
-    plot(xt,chose1_vis,'.');
+    plot(xt, pchoice(:,refc),'b-','LineWidth',2);
+    plot(xt,chose1_vis,'r*');
     hold off
     legend('p(outcome|choose opt 1)','p(choose opt 1)','chosen option 1')
     xlabel('trials')
