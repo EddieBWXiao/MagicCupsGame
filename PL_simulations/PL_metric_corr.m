@@ -7,11 +7,14 @@ function PL_metric_corr(beta,inseq)
 theagent = @RW1lr_plsim;
 
 if nargin == 0
-    beta = [0.5,1,3,4,8,10,20];
-    task = gen_misce_task(repmat([20,0.8;20,0.2],2,1));
+    beta = [1,3,20];
+    task = gen_misce_task(repmat([20,0.8;20,0.2],10,1));
+elseif nargin < 2
+    task = gen_misce_task(repmat([20,0.8;20,0.2],10,1));
 else
     task = gen_misce_task(inseq);
 end
+
 %set sequence of parameter values to try
 alphas = unifrnd(0,1,[1000,1]);
 
