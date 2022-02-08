@@ -1,0 +1,48 @@
+function prept = Goris2020Extract
+
+addpath 'GorisData'
+addpath 'GorisData/ProbabilityTrackingTask'
+foldc = dir('GorisData/ProbabilityTrackingTask/*.txt');
+
+%obtain subject names sn
+for i = 1:length(foldc)
+    sn{i}= extractBefore(foldc(i).name,'.txt');
+end
+
+
+exclu = {'S76', 'S121', 'S126', 'S134', 'S141', 'S170', 'S187', 'S23', 'S35', 'S63', 'S85',...
+    'S91', 'S110', 'S113', 'S136', 'S51', 'S101', 'S114'};
+
+%remove the _tr files
+remov=false(size(sn));
+for i = 1:length(sn)
+    if contains(sn{i},'_tr')
+        remov(i) = true;%index file to remove
+    end
+    
+    %exclude participants excluded in original paper
+    if any(strcmp(exclu,sn{i}))
+        remov(i) = true;
+    end
+end
+
+sn(remov)=[];%remember to use () not {}!!
+
+%convert txt to table
+for i = 1:length(sn)
+    sfname = [sn{i} '.txt'];%put together file name
+    t = readtable(sfname);
+    t = t(:,1:12);%remove redundant col
+    %rename variables
+    t.Properties.VariableNames = {'Condition','nth_reversal_in_vol','trialtype',...
+        'onset_fig','onset_resp','onset_feedback','resp_side','actions','RT','outcomes','optimality','ITI'};
+    tmin = t(:,[8,10,11,1,2]);
+    tmin.missing = and(tmin.actions(:) ~= 1 , tmin.actions(:) ~= 2);%see if trials missing
+
+    dt{i} = tmin;%add to table
+end
+
+prept = [sn',dt'];
+save('GorisParticipantsMini.mat','prept')
+
+end
