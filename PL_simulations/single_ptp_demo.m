@@ -40,7 +40,7 @@ simvis_RW(simu,task1);
 %% step 3: compute model-independent measures for the virtual participant
 
 %find win-stay and lose-shift rates in this particular run
-[lsrate,wsrate] = wsls_calc(simu);
+[lsrate,wsrate] = wsls_sim_calc(simu);
 
 %% step 4: visualise average behaviour of virtual participant
 
