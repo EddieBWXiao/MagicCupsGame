@@ -18,9 +18,14 @@ gen_misce_task_visual(task1);
 %% step 2: create a simulated agent (virtual participant) that performs the task
 
 graph = 1; %plot the behaviour of the simulated agent
-params = [0.4,6]; %set free parameters
+
+%set free parameters
     %first free parameter -- alpha (learning rate)
     %second free parameter -- beta (inverse temperature)
+alpha = 0.4;
+beta = 6;
+params = [alpha,beta]; 
+
 fprintf('simulated alpha = %.2f \n',params(1))
 fprintf('simulated beta = %.2f \n',params(2))
     
@@ -29,6 +34,9 @@ simu = RW1lr_plsim(task1,params,graph);
     %use Rescorla-Wagner model, with single learning rate
     %the agent updates expectations of both options
 
+%another function to do a plot of the simulation separately, if needed
+simvis_RW(simu,task1);
+    
 %% step 3: compute model-independent measures for the virtual participant
 
 %find win-stay and lose-shift rates in this particular run
@@ -62,12 +70,7 @@ fprintf('estimated beta = %.2f \n',ests.mean_beta)
 
 %% step 6: check quality of fit for individual virtual participant
 
-%to be continued
-
-
-
-
-
-
+fitvis_RW(@lik_RW1lr_PL, [logit(alpha),log(beta)],simu.choices,simu.feedback.outcomes,task1)
+%visualise the fitted trajectories
 
 
