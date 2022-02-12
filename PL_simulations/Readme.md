@@ -15,4 +15,5 @@ Script for exploring parameter-WSLS relations
 Demo for explaining different model fitting procedures available
 
 Other functions:
+
 response_model_illu: produce plots explaining how inverse temperature and lapse rate influences the relationship between expected values and probability of choice
