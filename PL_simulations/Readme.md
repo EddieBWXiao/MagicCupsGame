@@ -8,11 +8,12 @@ To explore the pipeline and the role of each function, see:
 
 
 
+
 *To add:*
 
 Script for exploring parameter-WSLS relations
 
-Demo for explaining different model fitting procedures available
+Demo for explaining different model fitting procedures available + parameter recovery
 
 Other functions:
 
