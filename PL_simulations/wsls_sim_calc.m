@@ -1,26 +1,25 @@
-function [lsrate,wsrate] = wsls_calc(choices,outcomes)
+function [lsrate,wsrate] = wsls_sim_calc(s)
 
 %calculates win-stay and lose-shift rates of simulated participant
 %for simple probabilistic learning task (2AFC, binary outcomes)
-%calculate from 
+%directly using simulation output
 
-%input:
-%choices: vector of 1 & 2 (actions taken)
-%outcomes: vector of 1 & 0 (whether the action was successful or not)
+%input s: struct (output from _plsim)
 %output: lose-shift rate and win-stay rate
 
 %Bowen Xiao
 %28/01/2022
 
-
-nt = length(choices);%length of task
-
+%% unpack virtual participant struct
+nt = length(s.task.p);%length of task
+winloss = s.feedback.score;%1 is succss, 0 is failure
+choices = s.choices;
 %% calculate WSLS
 %only consider trial 2 to end
 %win-stay: did not change option after trial success
 %lose-shift: switch option after no success
-wintrials = outcomes == 1;
-losstrials = outcomes == 0;
+wintrials = winloss == 1;
+losstrials = winloss == 0;
 nwin = sum(wintrials);
 nloss = sum(losstrials);
 isws = nan(1,nt);%whether a trial is WS or not
