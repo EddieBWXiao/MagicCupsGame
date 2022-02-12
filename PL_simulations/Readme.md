@@ -4,7 +4,7 @@ Repository for simulations and model fitting scripts for simple probabilistic le
 
 To explore the pipeline, see:
 
-single_ptp_demo.m: a demo for running a single simulation and model fitting for the virtual participant generated
+*single_ptp_demo.m*: a demo for running a single simulation and model fitting for the virtual participant generated
 
 
 
