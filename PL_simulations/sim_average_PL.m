@@ -46,7 +46,7 @@ for i = nruns:-1:1
     %compute other metrics for each participant
     earning(:,i) = cumsum(s.feedback.score');%original output is row; total earning
     choicecorr(i) = corr(s.chose1,s.feedback.outcomes(:,1));%correlation between choice and "answer"
-    [loseshift(i),winstay(i)] = wsls_calc(s);
+    [loseshift(i),winstay(i)] = wsls_sim_calc(s);
 end
 
 %produce string for displaying the parameters simulated
