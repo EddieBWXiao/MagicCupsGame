@@ -10,18 +10,20 @@ if nargin < 1
     nsim = 1000;
     ngraph = 4;%graph the heatmaps
 end
+%default beta and alpha values to visualise on single parameter plots
 if ngraph ~= 3 && nargin < 5
     betatry = [1,3,20];
     alphatry = [0.05,0.3,0.4,0.5,0.6,0.9];
 end
 
 task = gen_misce_task(taskseq);
-gen_misce_task_visual(task);
+
+%set sequence of parameter values to try
+alphas = unifrnd(0,1,[nsim,1]);
+betas = unifrnd(0.5,20,[nsim,1]);
 
 if ngraph == 1 || ngraph == 4
     %% change with learning rate, at different betas
-    %set sequence of parameter values to try
-    alphas = unifrnd(0,1,[nsim,1]);
     %preallocate
     final_earning = nan(length(betatry),length(alphas));
     loseshift = nan(size(final_earning));
@@ -64,10 +66,8 @@ end
 
 if ngraph == 2 || ngraph == 4
     %% change with beta, at different alphas
-    %set sequence of parameter values to try
-    betas = unifrnd(0.5,20,[nsim,1]);
     %preallocate
-    final_earning = nan(length(betatry),length(alphas));
+    final_earning = nan(length(betatry),length(betas));
     loseshift = nan(size(final_earning));
     winstay = nan(size(final_earning));
     accu = nan(size(final_earning));
@@ -147,8 +147,10 @@ if ngraph == 3 || ngraph == 4
     title('lose-shift rate')
     xlabel('learning rate')
     ylabel('inverse temperature')
+    caxis([0,1])
     subplot(2,2,2)
     helper_heatmap(winstay,beta_range,alpha_range);
+    caxis([0,1])
     title('win-stay rate')
     xlabel('learning rate')
     ylabel('inverse temperature')
@@ -162,6 +164,7 @@ if ngraph == 3 || ngraph == 4
     title('task accuracy')
     xlabel('learning rate')
     ylabel('inverse temperature')
+    caxis([0,1])
 end
 
 end
