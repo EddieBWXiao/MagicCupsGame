@@ -25,7 +25,7 @@ betabins = 30;
 
 %created in logit space or log etc.
 a_range = logit(0.01):(logit(0.99) - logit(0.01))/(alphabins-1):logit(0.99);
-b_range = log(0.1):(log(100)-log(0.1))/(betabins-1):log(100);
+b_range = log(0.1):(log(40)-log(0.1))/(betabins-1):log(40);
 %note: consistently use row vectors
 
 %put back to native space
@@ -33,12 +33,10 @@ a_native = logistic(a_range);
 b_native = exp(b_range);
 
 %% remove missing trials 
-
 actions(missing,:) = [];
 outcomes(missing,:)=[];
 
 %% loop through possible values, with other parameters fixed
-
 for cycle1 = length(a_range):-1:1
     for cycle2 = length(b_range):-1:1
         %parameters in native space must be transformed for _lik
@@ -51,7 +49,6 @@ for cycle1 = length(a_range):-1:1
     end
     %fprintf('parameter combination loops: %i to go \n',cycle1-1)
 end
-
 %record which dimension for which parameter
 a_dim = 1;
 beta_dim = 2;
@@ -74,7 +71,6 @@ LRdirect = ests.mean_a; %provide quick record of learning rate
 %% obtain BIC from LL
 mnegLL = modelh([ests.mean_a,ests.mean_beta],actions,outcomes);
 BIC=(2.*mnegLL)+length(parameters)*log(length(actions));
-
 %% graph
 %clear joint
 if graph   
@@ -91,6 +87,13 @@ if graph
 
     subplot(2,2,2)
     imagesc(joint);
+    xlabel('inverse temperature')
+    ylabel('learning rate')
+    xticks = 1:betabins;%size(~,2), because columns
+    yticks = 1:alphabins;
+    %compute content of tick markers (the scale displayed)
+    set(gca, 'XTick', xticks, 'XTickLabel', round(exp(b_range)))
+    set(gca, 'YTick', yticks, 'YTickLabel', round(logistic(a_range),2))
     title('alpha and beta, joint LL distribution')
 
     subplot(2,2,3)
@@ -102,9 +105,8 @@ if graph
     xlabel('beta')
     ylabel('probability')
     hold off       
-
 end
- 
+
 end
 function v = make_column(v)
     if ~iscolumn(v)
