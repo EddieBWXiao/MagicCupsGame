@@ -1,6 +1,6 @@
 # PL_simulations
 
-Repository for simulations and model fitting scripts for simple probabilistic learning tasks
+Repository for simulations and model fitting scripts for simple probabilistic learning tasks with binary outcomes
 
 To explore the pipeline and the role of each function, see:
 
