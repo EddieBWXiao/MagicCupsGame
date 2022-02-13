@@ -1,4 +1,4 @@
-function [negLL,vv]=lik_RW1lr_PL(parameters, actions, outcomes)
+function [negLL,vv,p]=lik_RW1lr_PL(parameters, actions, outcomes)
 
     %{
     % likelihood function for given parameters and performance
