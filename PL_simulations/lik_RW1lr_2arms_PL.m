@@ -24,7 +24,17 @@ function [negLL,vv,p]=lik_RW1lr_2arms_PL(parameters, actions, outcomes,priors)
     %% unpack data 
     % number of trials
     T = length(actions);
-    %check if outcomes
+    %check if outcomes are for chosen option only
+    if min(size(outcomes)) == 2 %if input is the outcome from both options
+        outcomes = reshape(outcomes,[T,2]);%reshape
+        %covert the outcome to outcome recevied for chosen
+        score = nan(size(outcomes));
+        chose1 = actions == 1;%logical indices for trials where option 1 was chosen
+        chose2 = actions == 2;%logical indices for trials where option 2 was chosen
+        score(chose1) = outcomes(chose1,1);%chose opt 1, won in opt 1
+        score(chose2) = outcomes(chose2,2);%chose opt 2, won in opt 2
+        outcomes = score;
+    end
     
     % to save probability of choice & values expected
     p = nan(T,1);%one column (p of that choice, on that trial)
