@@ -1,4 +1,4 @@
-function [negLL,vv,p]=lik_RW1lr_PL(parameters, actions, outcomes,priors)
+function [negLL,vv,p]=lik_RW1lr_PL_native(parameters, actions, outcomes,priors)
 
     %{
     % likelihood function for given parameters and performance
@@ -14,17 +14,12 @@ function [negLL,vv,p]=lik_RW1lr_PL(parameters, actions, outcomes,priors)
     output negative LL for future fmin
     %}
 
-    %% parameters (transform to native space)
+    %% parameters unpack
     %alpha = learning rate
-    nd_alpha  = parameters(1); % normally-distributed alpha
-    alpha     = 1/(1+exp(-nd_alpha)); % alpha1 (transformed to be between zero and one) 
-
+    alpha = parameters(1); % alpha(transformed to be between zero and one) 
     %inverse temperature
-    nd_beta  = parameters(2);
-    beta    = exp(nd_beta);
-
+    beta = parameters(2);
     %% unpack data (struct content same as RW2lr_bias_simu)
-
     % number of trials
     T = length(actions);
 
@@ -52,12 +47,12 @@ function [negLL,vv,p]=lik_RW1lr_PL(parameters, actions, outcomes,priors)
             p(t) = p2;
         end   
         %% learning
-        %update, regardless of outcome
+        %update, regardless of chose or unchosen
         delta  = outcomes(t,:) - v(t,:);
         v_trial = v_trial + (alpha*delta);
     end
     vv = v;
-    
+
     % sum of log-probability(data | parameters)
     loglik = sum(log(p+eps));
     
@@ -71,5 +66,5 @@ function [negLL,vv,p]=lik_RW1lr_PL(parameters, actions, outcomes,priors)
     end
     
     negLL = -loglik;
-    
+
 end
