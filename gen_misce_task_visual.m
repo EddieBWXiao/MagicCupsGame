@@ -9,7 +9,6 @@ for index = 1:length(f)
 end
 
 %% visualise
-figure;
 plot(xt,p,'b-');
 hold on
 plot(xt, outcome(:,1),'*')
