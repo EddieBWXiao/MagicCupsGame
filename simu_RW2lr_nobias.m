@@ -1,7 +1,7 @@
-function [actions, traj] = simu_RW2lr_bias(params,opt1)
+function [actions, traj] = simu_RW2lr_nobias(params,opt1)
 
 % simplified simulation code for IBLT task
-% model: Rescorla-Wagner, two learning rates, with one beta and one bias parameter
+% model: Rescorla-Wagner, two learning rates, with one beta; no bias parameter
 % input:
     % params: parameters; 4x1 matrix, a_win a_loss, beta, bias
     % opt1: the outcomes from option 1 observed by the participant
@@ -10,11 +10,9 @@ function [actions, traj] = simu_RW2lr_bias(params,opt1)
     % traj: struct variable; trajectories for pchoice & v_win/loss
 
 %% unpack free parameters & set fixed parameters
-alphas = params(1:2);
+alpha_w = params(1);
+alpha_l = params(2);
 beta = params(3);
-bias = params(4);
-alpha_w = alphas(1);
-alpha_l = alphas(2);
 
 initial_win_belief = 0.5;
 initial_loss_belief = 0.5;
@@ -40,7 +38,7 @@ for t=1:nt
         v_l(t) = initial_loss_belief;
     end
     %% choice/response model
-    pchoice_opt1 = (1+exp(-beta*(v_w(t)-v_l(t)+bias))).^-1;%as per Pulcu & Browning 2017
+    pchoice_opt1 = (1+exp(-beta*(v_w(t)-v_l(t)))).^-1;%as per Pulcu & Browning 2017
     pchoice(t,:) = [pchoice_opt1,1-pchoice_opt1]; %record p for both; either choose opt1, or opt2    
     % Do a weighted coinflip to make a choice: choose stim 1 if random
     if rand(1) < pchoice(t,1) %bigger the pchoice, more likely to choose "1"
@@ -63,6 +61,6 @@ for t=1:nt
 end
 
 %% output
-params = struct('alpha_w',alpha_w,'alpha_l',alpha_l,'beta',beta,'bias',bias);
+params = struct('alpha_w',alpha_w,'alpha_l',alpha_l,'beta',beta);
 traj = struct('v_w',v_w,'v_l',v_l,'pchoice',pchoice,'final_v_w',final_v_w,'final_v_p',final_v_l,'WPE',WPE,'LPE',LPE,'params',params);
 end
