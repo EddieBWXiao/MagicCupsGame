@@ -1,4 +1,4 @@
-function sr = calc_IBLT_switchrates(actions,wins,losses)
+function [sr, srvec] = calc_IBLT_switchrates(actions,wins,losses)
 %{
 for each outcome combination in IBLT
 compute the probability of switching afterwards
@@ -33,7 +33,7 @@ won = or(and(won_opt1,actions == 1),and(won_opt2,actions ==2));
 lost = or(and(lost_opt1,actions == 1),and(lost_opt2,actions ==2));
 
 %find total number of trials in which each happened
-    %end-1, since switch rate ignores last
+    %end-1, since no stay or switch after final trial
 n_wonlost = sum(wonlost(1:end-1));
 n_won = sum(won(1:end-1));
 n_lost = sum(lost(1:end-1));
@@ -53,8 +53,12 @@ s_lost = (switched & lost(1:end-1));
 s_neither = (switched & neither(1:end-1));
 
 % convert to rate
-sr.wonlost = s_wonlost/n_wonlost;
-sr.won = s_won/n_won;
-sr.lost = s_lost/n_lost;
-sr.neither = s_neither/n_neither;
+sr.won = sum(s_won)/n_won;
+sr.neither = sum(s_neither)/n_neither;
+sr.wonlost = sum(s_wonlost)/n_wonlost;
+sr.lost = sum(s_lost)/n_lost;
+
+% output in a single vector, for barchart plot
+srvec = [sr.won;sr.neither;sr.wonlost;sr.lost];
+%same order as xticklab = {'win & no loss','no win & no loss','win & loss','no win & loss'};
 end
