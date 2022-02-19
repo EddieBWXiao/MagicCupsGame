@@ -45,6 +45,7 @@ n_neither = sum(neither(1:end-1));
 
 % switch: action different
 switched = diff(actions)~=0;%1 if the NEXT trial is different
+nsw = sum(switched);
 
 % find if switch occurred after each outcome combination
 s_wonlost = (switched & wonlost(1:end-1));
@@ -57,6 +58,7 @@ sr.won = sum(s_won)/n_won;
 sr.neither = sum(s_neither)/n_neither;
 sr.wonlost = sum(s_wonlost)/n_wonlost;
 sr.lost = sum(s_lost)/n_lost;
+sr.totaln = nsw;%record net switches for debug
 
 % output in a single vector, for barchart plot
 srvec = [sr.won;sr.neither;sr.wonlost;sr.lost];
