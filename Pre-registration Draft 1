@@ -1,0 +1,50 @@
+Have any data been collected for this study already?
+A pilot study with 10 participants is being run.
+
+What's the main question being asked, or hypothesis being tested in this study?
+1.	We expect evidence for impoverished regulation of learning rate (IRLR) in people with diagnosis of anxiety-related disorders (H1a), and in people with high anxious-depressive symptoms (H1b). We suspect that IRLR could be specific to negative valence (aversive learning) in individuals with anxiety disorders (H1c). We expect these findings to also be applicable to continuous measures of anxiety (H1d).
+2.	We expect increased influence of punishment feedback on behaviour in people with diagnosis of anxiety-related disorders (H2a), which we call enhanced aversive learning (EAL). We expect EAL to be associated with symptoms of anxiety (H2b), and that we should find EAL in both model-dependent and model-independent measures (H2c).
+3.	We expect valence-independent high learning rates in people with diagnosis of ASD, especially for the stable outcome type (H3a).
+4.	If H1b were supported, we would like to know whether IRLR is also present in other symptom dimensions, namely compulsivity and social withdrawal. All three dimensions may be associated with IRLR (H4a), or IRLR could be specific to internalising symptoms (H4b)
+5.	We speculate that, in people with ASD diagnosis, uncertainty-related cognitive differences (e.g., IRLR) may be particularly relevant to anxiety in comparison with EAL (H5a).
+
+Describe the key dependent and independent variable(s), specifying how they will be measured.
+Participants would complete an online adaptation of the information learning bias task from Pulcu and Browning (2017), dubbed the Magic Cups Game (MCG), along with a series of questionnaires (Gillan et al., 2016). We note that the participants would also be completing other tasks from the same website over the course of a week, but this pre-registration would only focus on hypotheses about the MCG.
+
+Model-dependent variables
+For each participant, their choice data on MCG would be fitted with reinforcement learning models. For simplicity and comparability with previous studies, we would use modelling procedures that were previously applied to such tasks for the confirmatory analysis (Overman et al., 2021; Pulcu et al., 2019). In brief, four candidate models would be fitted separately to the three blocks for each participant: one being a simple Rescorla-Wagner model (RW1lr) where trial-wise outcome is calculated from the sum of wins and losses for each option, and the other three models being RW with two independent update equations for wins and losses (RW2lr); these three RW2lr models will differ on whether they have two different inverse temperature parameters for wins or losses (the model used in Pulcu & Browning, 2017), or a single inverse temperature parameter with another indecision point parameter (the winning model in Pulcu et al., 2019), or with a single inverse temperature parameter and no indecision point parameter. Parameter estimates would be calculated from the mean of the posterior distribution for each parameter. Model comparison will be based on the Bayesian Information Criterion (BIC) summed over all blocks in all participants (△BIC > 10 as strong evidence for the model with lower BIC). Based on previous studies, we expect the RW2lr model with indecision point parameter to have the lowest BIC, and we would use the parameters of this model for our main analysis unless there is strong evidence favouring another model. All RW2lr models would have two learning rates, αwin and αloss, for each block. Here, learning rate is the main dependent variable, while independent variables include outcome valence (with levels wins and losses) and block (both-volatile, win-volatile, and loss-volatile).
+
+Model-independent measures
+If a participants chosen option led to both a win and a loss, and that the participant switches to the other option on the next trial, then the choice on the next trial would classify as a loss-driven choice. The proportion of loss-driven choices should increase as the learning rate αloss increases, and it may also be considered as a form of “negative bias” in face of ambiguity. We would calculate the proportion separately for each block.
+
+Self-report measures
+The participants would complete nine different questionnaires (Gillan et al., 2016), assessing symptoms of depression, apathy, obsessive compulsive disorder (OCD), eating disorder, alcohol abuse, schizotypy, and social anxiety, as well as trait anxiety and impulsivity.
+
+Derived measures
+It is important to consider differences in learning rates, which in some sense also controls for baseline learning rate differences. Positive information bias is the difference between αwin and αloss in the win-volatile block, while negative information bias is the difference between αloss and αwin in the loss-volatile block. Regulation of learning rate (RLR) refers to how learning rates differ across blocks: we define positive RLR as the difference of the natural log of αwin from the win-volatile to the loss-volatile block, and negative RLR as the difference in log αloss from the loss-volatile to the win-volatile block. For exploratory analysis, we would also examine a baseline negative learning bias (BNLB), which is the difference between log αwin and αloss in the both-volatile block. We note that, in line with previous work, the both-volatile block would not be included in the main statistical analysis, in fear of poorer task understanding in both-volatile block leading to unreliable estimates.
+
+We would use a factor structure validated in previous studies to calculate participant scores on three transdiagnostic symptom dimensions: anxious-depression (AD), compulsive behaviour and impulsive thoughts (CBIT), and social withdrawal (SW). Following previous work (Patzelt et al., 2019), the scores would be equal to the regression coefficients for the three sets of factor loadings when predicting item-level responses.
+
+How many and which conditions will participants be assigned to?
+Participants would not be randomly assigned to different conditions – the main task (MCG) would be identical across participants. Participants with no diagnosis (control group, CT), with diagnosis of anxiety disorder (ANX group), with autism spectrum disorder but without diagnosis of any anxiety disorders (ASD group), and with autism spectrum disorder as well as diagnosis of anxiety disorder (ANX-ASD group) would be recruited based solely on self-report.
+
+Specify exactly which analyses you will conduct to examine the main question or hypothesis.
+For a mixed ANOVA with RLR as the dependent variable, we expect a main effect of ANX (H1a) or an ANX-Valence interaction, where ANX groups would have smaller negative RLR (H1c). Using learning rate as the dependent variable, we expect an ANX-Valence interaction, with high αloss in the ANX groups (H2a), and a main effect of ASD (H3a). We also expect high loss-driven choices in the ANX groups (H2c). For all effects found, we will assess whether group-level differences apply to continuous measures: depending on whether the self-reported STAI scores are normally distributed or not, Pearson’s correlations or Kendall’s tau would be used to assess correlation between trait anxiety and the significant effect(s) about anxiety disorders diagnoses found above (H1d and H2b). For another linear model with RLR as the dependent variable, using AD, CBIT and SW instead of diagnostic categories there might be significant effects of all three factors (H4a), or only with AD (H1b and H4b), but not interactions between valence and any of the factors. In all analyses, any demographic-related variables (e.g., age, gender) that are significantly different according to the group comparisons (p < 0.05, uncorrected) would be included as covariates of no interest.
+
+If all the hypotheses about anxiety (i.e., H1-H4, except H3a) above were supported, we would use logistic regression for H5, with ANX or no ANX as the dependent variable. If there were no group-level differences in IRLR or EAL, but only association with symptom scores, then the symptom score would be used as the dependent variable. For H5a, we expect a significant difference between the coefficients of ASD-RLR and ASD-EAL interactions, such that RLR contributes more to anxiety than EAL in the ASD group.
+
+Anything else you would like to pre-register? (e.g., data exclusions, variables collected for exploratory purposes, unusual analyses planned?)
+Quality control procedures
+For the learning task, we would look for significant evidence of instrumental learning, i.e., if participants have chosen the “rich” options more than 50% of the time. The “rich” option on each trial would be defined as the option whose net value is higher, though we note that there are periods where the two options are equal.
+
+Exclusion criteria for participants involve those who:
+1.	Did not alter their choices (either same option colour, or same spatial location) in any of the three test blocks, or stuck to one choice for 90% of the time
+2.	Terminated their task early.
+3.	Performed poorer than chance (or… a more stringent criteria on accuracy? Choosing the better stimulus for at least 55 percent of the time?)
+4.	Made choices in less than 200 ms, for over 20% of the trials (Nussenbaum et al., 2021)
+5.	Had interactions with their browser for more than 20 times (Nussenbaum et al., 2021)
+
+Exclusion criteria for trials within the task is that we would exclude choices made within 150ms.
+
+Model-dependent versus model-independent measures
+In view of possible divergences between model-dependent and model-independent measures, we would like to specify which measure would be the main outcome for which prediction to be tested. Learning rate will be used as the main outcome measure for the main questions Q1, Q2, and Q4, as the hypotheses were formulated with theories and prior work on dynamic adjustment of learning rates in mind. Meanwhile, for Q3, loss-driven choices would be considered the main outcome.
