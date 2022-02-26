@@ -20,7 +20,8 @@ plot(xt,traj.v_l(:,refc),'--');
 plot(xt, traj.pchoice(:,refc),'-','LineWidth',3);
 plot(xt,chose1_vis,'*');
 hold off
-legend('p(win|choose opt 1)','p(loss|choose opt 1)','reward expectation for opt 1','punishment expectation for opt 1','p(choose opt 1)','chosen option 1')
+legend('p(win|choose opt 1)','p(loss|choose opt 1)','win expectation for opt 1','loss expectation for opt 1','p(choose opt 1)','chosen option 1')
 xlabel('trials')
 ylabel('probability')
+
 end
