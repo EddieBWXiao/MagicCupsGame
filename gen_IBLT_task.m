@@ -42,8 +42,9 @@ loss1_b3 = [repmat(0.8,15,1);repmat(0.2,15,1);repmat(0.8,15,1);repmat(0.2,15,1)]
 
 
 %manually write down Sandy's contingencies:
-win1_b1set = [repmat(0.2,12,1);repmat(0.8,13,1);repmat(0.2,17,1);repmat(0.8,18,1)];
-loss1_b1set = [repmat(0.8,18,1);repmat(0.2,17,1);repmat(0.8,13,1);repmat(0.2,12,1);];
+
+win1_b1set = [repmat(0.2,13,1);repmat(0.8,14,1);repmat(0.2,16,1);repmat(0.8,17,1)];
+loss1_b1set = [repmat(0.8,17,1);repmat(0.2,16,1);repmat(0.8,14,1);repmat(0.2,13,1);];
 
 %% set task condition & generate feedback
 if strcmp(randomisation,'fixed') || nargin < 2
@@ -101,7 +102,13 @@ nt = length(wins);%record number of trials
 xt = 1:1:nt;%array for 1:1:number of trials
 xt = xt';%should be a column vector
 points = wins - losses;%table for what participants would receive upon each choice
+
 outcome_opt1 = [wins(:,1),losses(:,1)];%the outcomes for option 1 (Y in Browning code)
+outcomes_all = [wins(:,1),losses(:,1),wins(:,2),losses(:,2)]; %all observed outcomes
+    %should be same sequence as Magic_Cups_Answers.csv content
+
 %% output 
-task = struct('p_win',p_win,'p_loss',p_loss,'wins',wins,'losses',losses,'nt',nt,'xt',xt,'points',points,'outcome_opt1',outcome_opt1);
+task = struct('p_win',p_win,'p_loss',p_loss,'wins',wins,'losses',losses,...
+    'nt',nt,'xt',xt,'points',points,'outcome_opt1',outcome_opt1,'outcomes_all',outcomes_all);
+
 end
