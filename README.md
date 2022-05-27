@@ -1,5 +1,5 @@
 # MagicCupsGame
-For modelling and general data analysis of the CamRAA "Magic Cups Game":
+(On-going; in construction)
 
 **Data preprocessing (extraction from spreadsheet in excel)**
 
