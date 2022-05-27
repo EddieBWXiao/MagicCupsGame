@@ -1,5 +1,5 @@
 # MagicCupsGame
-(In construction; no final scripts)
+In construction; no final scripts
 
 **Data preprocessing (extraction from spreadsheet in excel)**
 
