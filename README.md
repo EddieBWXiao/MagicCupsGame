@@ -22,6 +22,8 @@ Calculates the model-agnostic metric indicated in file name, with input being th
 **Folders:**
 
 PL_simulations: for code simulating tasks with only one outcome type (simple reinforcement learning tasks, for building simple Rescorla-Wagner models)
-Goris2020TestAnalysis: code for exploratoration on Goris, J., Silvetti, M., Verguts, T., Wiersema, J. R., Brass, M., & Braem, S. (2020). Autistic traits are related to worse performance in a volatile reward learning task despite adaptive learning rates. Autism, 1362361320962237. https://doi.org/10.1177/1362361320962237
+
+Goris2020TestAnalysis: code for exploration on Goris, J., Silvetti, M., Verguts, T., Wiersema, J. R., Brass, M., & Braem, S. (2020). Autistic traits are related to worse performance in a volatile reward learning task despite adaptive learning rates. Autism, 1362361320962237. https://doi.org/10.1177/1362361320962237
+
 VisualHelperFunctions: custom plotting function stored for future reference
 
