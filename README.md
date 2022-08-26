@@ -23,6 +23,7 @@ Modified from code provided in https://osf.io/k36h4/; the code on which the RW2l
 **Model-agnostic measures**
 
 Functions beginning with calc_
+
 Calculates the model-agnostic metric indicated in file name, with input being the choice of a specific participant on a specific block, and the outcome sequence from that block.
 
 **Folders:**
