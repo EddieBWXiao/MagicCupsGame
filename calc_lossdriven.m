@@ -6,8 +6,6 @@ function lossdriven = calc_lossdriven(actions,wins,losses)
     %wins & losses: two arrays of ntrials x 2; col 1 for opt 1
 
 %output: a number ~ the proportion of loss-driven choices
-    %comparing with output of calc_IBLT_switchrates...
-    %should be the sum of sr.wonlost & sr.neither
 
 % credit: modified from code by Dr Margot Overman https://osf.io/av9pf/
 
@@ -21,8 +19,8 @@ trial_both_shape2=(losses(:,2) == 1 & wins(:,2) == 1);
 count_lossdriven=0;
 for i = 1:(nr_trials-1) % do not run for final trial of each block, as there will be no i+1 response
     if ((trial_both_shape1(i)==1 && actions(i+1)==2) || (trial_both_shape2(i)==1 && actions(i+1)==1))
-        %important: does not care button_pressed(i+1), just whether the win
-        %"lured" the participant to the choice
+        %important: does not care button_pressed at i
+        %just whether participants were away from the loss side
         count_lossdriven=count_lossdriven+1;
     end
 end

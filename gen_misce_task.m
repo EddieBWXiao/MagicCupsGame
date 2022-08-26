@@ -47,6 +47,10 @@ function task = gen_miniblock(ntrials,contingency)
 %% outline the probabilistic associations & proportion of successes
 p = repmat(contingency,ntrials,1);%probability of outcome
 n1s =contingency*ntrials;%number of success available from the option
+
+if round(n1s) ~= n1s
+    disp('Error: contingency not applicable to specified number of trials')
+end
 %% designate whether each trial is a win or loss, for option one
 %create a string of binary outcomes with the specified proportion
 rawtrials = [zeros(round(ntrials-n1s),1);ones(round(n1s),1)];

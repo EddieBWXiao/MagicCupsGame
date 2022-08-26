@@ -49,6 +49,9 @@ nsw = sum(switched);
 
 % find if switch occurred after each outcome combination
 s_wonlost = (switched & wonlost(1:end-1));
+    %why the & works: switched documents trials 2:end, and we want to see 
+    %how each trial in switched is affected by the previous trial
+    %therefore we are looking for 1:end-1, which is exactly what is in wonlost
 s_won = (switched & won(1:end-1));
 s_lost = (switched & lost(1:end-1));
 s_neither = (switched & neither(1:end-1));
