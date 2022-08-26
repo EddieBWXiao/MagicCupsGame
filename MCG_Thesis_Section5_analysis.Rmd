@@ -1,0 +1,562 @@
+---
+title: "MCG_Thesis_Section5_analysis"
+output: word_document
+always_allow_html: true
+---
+```{r setup, message=FALSE, }
+library(dplyr)
+library(tibble)
+library(afex)
+library(emmeans)
+library(fastqq)
+library(car) #do NOT load this unless all those dplyr::recode were run
+library(jtools)
+library(stringr)
+library(tidyr)
+library(knitr)
+library(kableExtra)
+library(ggthemes)
+library(ggplot2)
+library(ggbeeswarm)
+library(ggpubr)
+library(ROCR)
+
+CurrentSourceWD<-dirname(rstudioapi::getSourceEditorContext()$path)
+setwd(CurrentSourceWD)
+
+#load all helper functions
+setwd('StatsHelperFunctions') #pop into the folder
+files.sources = list.files()
+sapply(files.sources, source)
+setwd(CurrentSourceWD) #go back to yTain folder
+
+aov_get_effect<-function(afexoutput,effect_list){
+  #input the table (output of afex)
+  #and a vector of the effects (exactly in strings) to extract
+  #can also add_atfront --> get one column with custom info, e.g., response variable or model name
+  #output the table of...
+    #df, MSE, F, p, ges
+  d<-cbind(Effect = rownames(afexoutput$anova_table), afexoutput$anova_table)
+  d<-d[d$Effect %in% effect_list,] #extract the effect
+  
+  #rename the columns
+  names(d)[names(d)=="num Df"]<-"df_num"
+  names(d)[names(d)=="den Df"]<-"df_den"
+  names(d)[names(d)=="Pr(>F)"]<-"p"
+  
+  #finally... remove the rownames
+  row.names(d)<-NULL
+  
+  return(d)
+}
+MyTwoWayPlot_NoConnect<-function(din,Xvar,Yvar,withinSubjFactor,Ylabel){
+  #din is the data frame input; here, be long...
+  #Xvar and Yvar and Ylabel should be strings
+  
+  #the biggest problem: basically incompatible with drawing lines
+  
+  aus<-ggplot(din,aes_string(x = Xvar, y = Yvar, color = withinSubjFactor)) +
+  stat_summary(
+    fun.data = mean_cl_boot, size = 1,
+    position = position_dodge(0.666) #finally found a line that dodges...
+  ) +
+  geom_quasirandom(width = .2, stroke = 0, 
+                   dodge.width=0.666,
+                   alpha=0.8) +
+  scale_y_continuous(Ylabel)+theme_classic()
+return(aus)
+}
+
+```
+
+
+```{r}
+#winning model in fixed-effect comparison
+modelname<-c('RW2lrbetaNoBias')
+
+#initialise empty df
+
+## Data preprocessing ~ loading in
+omni<-read.csv(sprintf('MCG_OmniTable_PostExclusion_%s.csv',modelname))
+
+omni<-make_lr_logit(omni) #transform raw LR to logit space
+  #IMPORTANT: THIS SHOULD NOT BE DONE AGAIN IN FUTURE PROCESSING!!!
+
+omni<-makefactor_vars(omni)
+zCovariates<-z_numeric_vars(omni[,c("extID","Age","EducationLevel")])
+ #add in medication status (and ALL medication vars) in another analysis, since imbalanced group
+
+#======Create long format over the z scored variables======
+#long format for learning rate
+longLR<-dplyr::select(omni,extID,group,ANX,ASD,losslrlossvol,losslrwinvol,winlrlossvol,winlrwinvol) %>% 
+  pivot_longer(cols = contains('lr'),#,losslrlossvol:winlrwinvol,
+               names_to = 'condition',values_to = 'LR') #into long format
+#create the within-subject factors
+longLR$valence[str_detect(longLR$condition,"winlr")]<-"positive"
+longLR$valence[str_detect(longLR$condition,"losslr")]<-"negative"
+longLR$block[str_detect(longLR$condition,"winvol")]<-"WinVolatile"
+longLR$block[str_detect(longLR$condition,"lossvol")]<-"LossVolatile"
+write.csv(longLR,sprintf("MCG_longLR_%s.csv",modelname))
+longLR<-z_numeric_vars(longLR) #standardise the learning rates (across all conditions)
+longLR<-merge(longLR,
+              zCovariates, #list all the controlled variables here
+              by="extID")
+longLR<- longLR[,!(names(longLR) %in% c("condition"))] #delete the column we no longer need 
+longLR<-makefactor_vars(longLR)
+
+#important: tricky line to order the wins before losses when plotting!!
+longLR$block<-factor(longLR$block, levels=c("WinVolatile", "LossVolatile"))
+
+
+#for RLR
+theRLR<-dplyr::select(omni,extID,group,ANX,ASD,PositiveRLR,NegativeRLR,AD,CBIT,SW) %>% 
+  pivot_longer(cols=c("PositiveRLR","NegativeRLR"),
+               names_to = 'valence',values_to = 'RLR')#into long format
+#create the within-subject factors
+theRLR$valence[str_detect(theRLR$valence,"PositiveRLR")]<-"positive"
+theRLR$valence[str_detect(theRLR$valence,"NegativeRLR")]<-"negative"
+write.csv(theRLR,sprintf("MCG_long_theRLR_%s.csv",modelname))
+theRLR<-z_numeric_vars(theRLR) #do this before adding other already z-scored coolumns
+theRLR<-merge(theRLR,
+              zCovariates, #add all the control variables here
+              by="extID")
+theRLR<-makefactor_vars(theRLR)
+
+#====h0 information bias get======
+h0 <- afex::aov_car(LR ~ valence*block + Error(extID/valence*block),
+                              data = longLR,
+                              type = 2) 
+
+#====testing the first two hypotheses=====
+h1.2.ctrl <- afex::aov_car(
+  LR ~ Age+EducationLevel+ANX*ASD*valence*block + Error(extID/valence*block),
+  data = longLR,
+  type = 2,
+  factorize = FALSE)
+
+#====testing RLR, two hypotheses=====
+h3.4.ctrl <- afex::aov_car(
+  RLR ~ Age+EducationLevel+ANX*ASD*valence + Error(extID/valence),
+                           data = theRLR,
+                           type = 2,
+                           factorize = FALSE)
+
+#extract the effects of interest
+h0df<-aov_get_effect(h0,c("valence:block"))
+h1cdf<-aov_get_effect(h1.2.ctrl,c("ANX:valence"))
+h2cdf<-aov_get_effect(h1.2.ctrl,c("ASD","ASD:valence"))
+h3cdf<-aov_get_effect(h3.4.ctrl,c("ANX","ANX:valence"))
+h4cdf<-aov_get_effect(h3.4.ctrl,c("ANX:ASD:valence"))
+
+h3inLRctrl<-aov_get_effect(h1.2.ctrl,c("ANX:valence:block"))
+
+
+
+
+#======doing the analysis over continuous transdiag dimensions=======
+h5.ctrl<-lmer(RLR~Age+EducationLevel+valence*(AD+CBIT+SW)+(1 | extID), theRLR)
+
+#for testing if dimensions explain over and above covar of no interest
+h5.null<-lmer(RLR~Age+EducationLevel+valence+(1 | extID), theRLR,REML = FALSE)
+h5.full<-lmer(RLR~Age+EducationLevel+valence*(AD+CBIT+SW)+(1 | extID), theRLR,REML = FALSE)
+h5LRT<-anova(h5.null,h5.full)
+```
+
+(Getting the F test results)
+```{r}
+knitr::kable(h1cdf,digits = 3,caption = "Adjusted for age and education level") %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+
+knitr::kable(h2cdf,digits = 3,caption = "Adjusted for age and education level") %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+
+h3cdf<-h3cdf[order(h3cdf$Effect),]
+knitr::kable(h3cdf,digits = 3,caption = "Adjusted for age and education level") %>% 
+  #kbl(caption = "Adjusted for age and education level") %>%
+  row_spec(which(h3cdf$p<0.025),bold=T) %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+
+knitr::kable(h4cdf,digits = 3,caption = "Adjusted for age and education level") %>% 
+  #kbl(caption = "Adjusted for age and education level") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+
+knitr::kable(h3inLRctrl,digits = 3,caption = "Adjusted for age and education level") %>% 
+  #kbl(caption = "Adjusted for age and education level") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+(Getting the linear mixed model results)
+```{r}
+h5vis<-jtools::plot_summs(h5.ctrl,
+                          ci_level = 0.99,
+                          inner_ci_level = 0.95,
+                          #plot.distributions = TRUE, #not very informative
+                          scale = TRUE)
+
+h5vis
+```
+
+## Collective model assumption checks
+-Just check normality of residuals
+```{r}
+ResidNorm(h1.2.ctrl)
+ResidNorm(h3.4.ctrl)
+ResidNorm(h5.ctrl)
+```
+
+## Hypothesis 0: induction of information bias
+```{r}
+knitr::kable(h0df,digits = 3,caption = " ") %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+
+plotIBLT<-emmip(h0,~valence | block, CIs = TRUE)
+ValenceBiasTable<-as.data.frame(pairs(emmeans(h0,~valence|block)))
+crossBlock<-pairs(emmeans(h0,~block|valence))
+LRadjustTable<-as.data.frame(crossBlock)
+
+plotIBLT+theme_classic()+
+labs( y = 'Estimated marginal means of \n learning rate (logit space)', x = 'valence',
+      title = " ")
+
+knitr::kable(ValenceBiasTable,digits = 3,caption = " ") %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+knitr::kable(LRadjustTable,digits = 3,caption = " ") %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+
+```{r}
+#Additional checks:
+#here be checks for the information bias:
+pairs(emmeans(h1.2.ctrl, ~valence | block))
+#here be checks for the learning rate regulation by valence
+pairs(emmeans(h1.2.ctrl, ~block | valence))
+#(basically run the interactions again)
+contrast(emmeans(h1.2.ctrl, ~valence*block), interaction = "pairwise") 
+
+```
+
+Additional analysis with ONLY the controls for IBLT
+```{r}
+#get the data out
+longLR_CT<-read.csv(sprintf("MCG_longLR_%s.csv",'RW2lrbetaNoBias'))
+
+longLR_CT<-longLR_CT[longLR_CT$group=="CT",]
+
+CovariatesNoZ<-dplyr::select(omni,extID,Age,EducationLevel)
+
+longLR_CT<-merge(longLR_CT, CovariatesNoZ, 
+                 by="extID")
+longLR_CT<-z_numeric_vars(longLR_CT) #standardise the learning rates (across all conditions)
+longLR_CT<- longLR_CT[,!(names(longLR_CT) %in% c("condition"))] #delete the column we no longer need 
+longLR_CT<-makefactor_vars(longLR_CT)
+```
+
+```{r}
+h0onlyCT <- afex::aov_car(LR ~ valence*block + Error(extID/valence*block),
+                              data = longLR_CT) 
+knitr::kable(h0onlyCT$anova_table,digits = 3) %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+
+plotIBLT<-emmip(h0onlyCT,~valence | block, CIs = TRUE)
+ValenceBiasTable<-as.data.frame(pairs(emmeans(h0onlyCT,~valence|block)))
+crossBlock<-pairs(emmeans(h0onlyCT,~block|valence))
+LRadjustTable<-as.data.frame(crossBlock)
+
+plotIBLT+theme_classic()+
+labs(y = 'Estimated marginal means of \n learning rate (logit space)', x = 'valence',
+      title = " ")
+knitr::kable(ValenceBiasTable,digits = 3,caption = " ") %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+knitr::kable(LRadjustTable,digits = 3,caption = " ") %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+
+
+
+
+## Follow-up to the unexpected ANX effect directionality
+
+Significant ANOVA result to unpack: H3 possibility 1 ~ main effect of ANX on RLR
+```{r}
+WithAdjANXmain<-as.data.frame(pairs(emmeans(h3.4.ctrl, ~ANX)))
+knitr::kable(WithAdjANXmain,digits = 3,
+             caption = "Effect of Anxiety Diagnosis, 
+             adjusted for age and education level") %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+
+We hereby go back to the omnibus statistical model over learning rates:
+
+Visualise the IBLT effects:
+```{r}
+emmeans::emmip(h1.2.ctrl, valence ~ block | ANX,
+               #dotarg = list(size = 3),
+               CIs = TRUE)+
+  ggplot2::theme_classic()+
+  labs( y = 'Estimated marginal means of \n learning rate (logit space)', x = 'block')
+theEmmipThing<-emmeans::emmip(h1.2.ctrl, valence ~ block | ANX,CIs = TRUE,plotit = FALSE)
+datEmmean<-emmeans::emmip(h1.2.ctrl, valence ~ block | ANX) #use this to redo plot by self if necessary
+
+emmip_ggplot(theEmmipThing,
+             #dodge=0.2,
+             facetlab  = )+
+  ggplot2::theme_classic()+
+  theme(strip.background = element_blank(), #turn-off facet label for now
+            strip.text = element_blank())+
+  labs(y = 'Estimated marginal means of \n learning rate (logit space)', x = 'block')+ylim(-0.75,0.50)
+```
+For the comparisons, stratified by ANX, using the contrasts
+```{r}
+IntByAnx<-emmeans(h1.2.ctrl,~valence*block|ANX)
+
+IntAll<-emmeans(h1.2.ctrl,~valence*block*ANX)
+
+#as per sequence in the emmeans obj
+NegWinVolAnx<-c(1,0,0,0,0,0,0,0)
+PosWinVolAnx<-c(0,1,0,0,0,0,0,0)
+NegLossVolAnx<-c(0,0,1,0,0,0,0,0)
+PosLossVolAnx<-c(0,0,0,1,0,0,0,0)
+NegWinVolNoAnx<-c(0,0,0,0,1,0,0,0)
+PosWinVolNoAnx<-c(0,0,0,0,0,1,0,0)
+NegLossVolNoAnx<-c(0,0,0,0,0,0,1,0)
+PosLossVolNoAnx<-c(0,0,0,0,0,0,0,1)
+contrast(IntAll,
+         method = list("WinInfoBiasAnx" = PosWinVolAnx - NegWinVolAnx,
+                       "LossInfoBiasAnx" = NegLossVolAnx - PosLossVolAnx,
+                       "NegRLRAnx" = NegLossVolAnx - NegWinVolAnx,
+                       "PosRLRAnx" = PosWinVolAnx - PosLossVolAnx,
+                       "WinInfoBiasNoAnx" = PosWinVolNoAnx - NegWinVolNoAnx,
+                       "LossInfoBiasNoAnx" = NegLossVolNoAnx - PosLossVolNoAnx,
+                       "NegRLRNoAnx" = NegLossVolNoAnx - NegWinVolNoAnx,
+                       "PosRLRNoAnx" = PosWinVolNoAnx - PosLossVolNoAnx))
+
+```
+
+
+For split group check of interaction effect:
+```{r}
+longLR_byANX<-read.csv(sprintf("MCG_longLR_%s.csv",
+                               'RW2lrbetaNoBias')) #here, control which model used for
+
+longLR_ANX<-longLR_byANX[longLR_byANX$ANX=="ANX",]
+longLR_noANX<-longLR_byANX[longLR_byANX$ANX=="NoANX",]
+
+CovariatesNoZ<-dplyr::select(omni,extID,Age,EducationLevel)
+
+
+longLR_ANX<-merge(longLR_ANX, 
+                  CovariatesNoZ, 
+                  by="extID")
+longLR_ANX<-z_numeric_vars(longLR_ANX) #standardise the learning rates (across all conditions)
+longLR_ANX<- longLR_ANX[,!(names(longLR_ANX) %in% c("condition"))] #delete the column we no longer need 
+longLR_ANX<-makefactor_vars(longLR_ANX)
+
+
+longLR_noANX<-merge(longLR_noANX,
+                    CovariatesNoZ,
+                    by="extID")
+longLR_noANX<-z_numeric_vars(longLR_noANX) #standardise the learning rates (across all conditions)
+longLR_noANX<- longLR_noANX[,!(names(longLR_noANX) %in% c("condition"))] #delete the column we no longer need 
+longLR_noANX<-makefactor_vars(longLR_noANX)
+
+#runs the pairwise, unpacking the interaction
+print('interaction as test of differences: significance of valence*block interactions in ANX vs No-ANX')
+
+
+
+IBLT.ANX<-afex::aov_car(LR~Age+EducationLevel+ASD*valence*block + Error(extID/valence*block), #model with all but ANX
+                        longLR_ANX,type = 2, factorize = FALSE)
+IBLT.NoANX<-afex::aov_car(LR~Age+EducationLevel+ASD*valence*block + Error(extID/valence*block),
+                          longLR_noANX,type = 2, factorize = FALSE)
+IBLT.ANX
+IBLT.NoANX
+```
+
+
+All relevant post-hoc tests:
+```{r}
+LRaov<-h1.2.ctrl
+c0<-contrast(emmeans(LRaov,  ~ANX*valence*block),interaction = "pairwise") #overall three-way interaction
+ThreeWayContr<-as.data.frame(c0)
+
+#"information bias change across blocks / two-way interaction, for ANX and non-ANX")
+c1<-contrast(emmeans(LRaov, ~valence*ANX*block), interaction = "pairwise", by = "ANX")
+ValBlockContr<-as.data.frame(c1)
+
+#"check: simpler differences in information bias, across groups")
+c2<-contrast(emmeans(LRaov, ~valence*ANX | block), interaction = "pairwise")
+InfoBiasContr<-as.data.frame(c2)
+
+#"check: simpler differences in adjustment of learning rate, across groups")
+c3<-contrast(emmeans(LRaov, ~ANX*block | valence), interaction = "pairwise")
+LRchangeContr<-as.data.frame(c3)
+
+#"check: simpler differences in learning rate for ANX vs Non-ANX, in each cell")
+c4<-contrast(emmeans(LRaov, ~valence*block*ANX), interaction = "pairwise",by=c("valence","block"))
+basicLRContr<-as.data.frame(c4)
+```
+
+```{r}
+knitr::kable(ThreeWayContr,digits = 3,caption = "Contrast for Three-way Interaction of ANX-valence-block") %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+knitr::kable(ValBlockContr,digits = 3,caption = "Two-way interactions in ANX groups and in Non-ANX groups") %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+knitr::kable(InfoBiasContr,digits = 3,
+             caption = "Difference in block-specific information bias, between ANX groups and Non-ANX groups") %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+knitr::kable(LRchangeContr,digits = 3,
+             caption = "Difference in valence-specific learning rate change, between ANX groups and Non-ANX groups") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+knitr::kable(basicLRContr,digits = 3,
+             caption = "Simple effects for learning rate differences between ANX groups and Non-ANX groups") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+
+## Display full ANCOVA table
+```{r}
+cleanAfexTable<-function(afexoutput){
+  d<-cbind(Effect = rownames(afexoutput$anova_table), afexoutput$anova_table)
+  
+  #rename the columns
+  names(d)[names(d)=="num Df"]<-"df_num"
+  names(d)[names(d)=="den Df"]<-"df_den"
+  names(d)[names(d)=="Pr(>F)"]<-"p"
+  row.names(d)<-NULL
+  #round digits to three
+  
+  d$ges<-round(d$ges, digits = 3)
+  d$p<-round(d$p, digits = 3)
+  
+  #get location of any number <0.001 for ges and p
+  GesSmall <- d$ges < 0.001
+  pSmall <- d$p < 0.001
+  
+  #make all numbers strings
+  d$ges<-as.character(d$ges)
+  d$p<-as.character(d$p)
+  
+  #replace the logged locations with <0.001
+  d$ges[GesSmall]<-"<0.001"
+  d$p[pSmall]<-"<0.001"
+  
+  #finally... remove the rownames
+  
+  return(d)
+}
+
+AncovaTable.LR<-cleanAfexTable(h1.2.ctrl)
+knitr::kable(AncovaTable.LR,digits = 3,
+             caption = "Full ANCOVA table for LR") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+
+AncovaTable.RLR<-cleanAfexTable(h3.4.ctrl)
+knitr::kable(AncovaTable.RLR,digits = 3,
+             caption = "Full ANCOVA table for RLR") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+
+
+## Exploratory analysis written here for convenience: inverse temperature
+
+```{r}
+longB<-Wide2Long2x2(df = omni, theVar = "beta")
+  
+longB<-merge(longB,dplyr::select(omni,extID,AD,SW,CBIT),by="extID")
+longB<-makefactor_vars(longB)
+longB$beta<-log(longB$beta) #important: log transform (for normality)
+longB<-z_numeric_vars(longB)
+```
+
+Test difference in beta
+```{r}
+beta.ctrl <- afex::aov_car(beta ~ Age+EducationLevel+ANX*ASD*block + Error(extID/block),
+                           data = longB,
+                           type = 2,
+                           factorize = FALSE)
+ResidNorm(beta.ctrl)
+AncovaTable.beta<-cleanAfexTable(beta.ctrl)
+knitr::kable(AncovaTable.beta,digits = 3,
+             caption = "Full ANCOVA table for inverse temperature") %>%
+  row_spec(which(beta.ctrl$anova_table$`Pr(>F)`<0.05),bold=T) %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+Follow-up to the effect of block
+```{r}
+pairs(emmeans(beta.ctrl,~block))
+emmeans(beta.ctrl,~block)
+mean(omni$betawinvol)
+mean(omni$betalossvol)
+```
+
+for the symptom dimensions
+```{r}
+h5beta.null<-lmer(beta~Age+EducationLevel+block+(1 | extID), longB,REML = FALSE)
+h5beta.full<-lmer(beta~Age+EducationLevel+block*(AD+CBIT+SW)+(1 | extID), longB,REML = FALSE)
+h5betatest<-anova(h5beta.null,h5beta.full)
+h5betatest
+```
+
+## Both-volatile block explorations
+```{r}
+longBothVol<-dplyr::select(omni,extID,group,
+                           ANX,ASD,AD,SW,CBIT,
+                           losslrbothvol,winlrbothvol) %>% 
+  pivot_longer(cols = contains('lr'),
+               names_to = 'condition',values_to = 'LR') #into long format
+longBothVol$valence[str_detect(longBothVol$condition,"winlr")]<-"positive"
+longBothVol$valence[str_detect(longBothVol$condition,"losslr")]<-"negative"
+longBothVol<-z_numeric_vars(longBothVol) #standardise the learning rates (across all conditions)
+longBothVol<-merge(longBothVol,
+              zCovariates, #list all the controlled variables here
+              by="extID")
+longBothVol<- longBothVol[,!(names(longBothVol) %in% c("condition"))] #delete the column we no longer need 
+longBothVol<-makefactor_vars(longBothVol)
+
+bothvol.ctrl <- afex::aov_car(LR ~ Age+EducationLevel+ANX*ASD*valence + Error(extID/valence),
+                           data = longBothVol,
+                           type = 2,
+                           factorize = FALSE)
+ResidNorm(bothvol.ctrl)
+bothvol.ctrl
+pairs(emmeans(bothvol.ctrl,~valence))
+
+
+omnilogged<-omni
+omnilogged$betabothvol<-log(omnilogged$betabothvol)
+bothvol.beta <- afex::aov_car(betabothvol ~ Age+EducationLevel+ANX*ASD + Error(extID),
+                           data = omnilogged,
+                           type = 2,
+                           factorize = FALSE)
+ResidNorm(bothvol.beta)
+bothvol.beta
+
+
+bothvolLRdf<-cleanAfexTable(bothvol.ctrl)
+knitr::kable(bothvolLRdf,digits = 3,
+             caption = " ") %>%
+  row_spec(which(bothvol.ctrl$anova_table$`Pr(>F)`<0.05),bold=T) %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+
+```
+
+```{r}
+#for testing if dimensions explain over and above covar of no interest
+h5bothvol.null<-lmer(LR~Age+EducationLevel+valence+(1 | extID), longBothVol,REML = FALSE)
+h5bothvol.full<-lmer(LR~Age+EducationLevel+valence*(AD+CBIT+SW)+(1 | extID), longBothVol,REML = FALSE)
+h5bothvoltest<-anova(h5bothvol.null,h5bothvol.full)
+h5bothvoltest
+```
+
+
+## Explore the role of AD dimension in conjunction with diagnostic categories
+```{r}
+afex::aov_car(RLR ~ Age+EducationLevel+AD*ASD*valence + Error(extID/valence),
+                           data = theRLR,
+                           type = 2,
+                           factorize = FALSE)
+withADcovar<-afex::aov_car(RLR ~ Age+EducationLevel+ANX*ASD*valence + AD + Error(extID/valence),
+                           data = theRLR,
+                           type = 2,
+                           factorize = FALSE)
+withADcovar
+pairs(emmeans(withADcovar,~ANX))
+```
